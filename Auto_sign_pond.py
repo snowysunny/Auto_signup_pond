@@ -133,8 +133,6 @@ def create_sys_detail(trade_info):
     sql = sql % (
     trade_info[0], trade_info[1], trade_info[2], trade_info[3], trade_info[4], trade_info[5], trade_info[6],
     trade_info[7], trade_info[8], trade_info[9], trade_info[10])
-
-
     flag = 1
     try:
         cursor.execute(sql)
