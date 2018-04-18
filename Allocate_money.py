@@ -710,18 +710,18 @@ def determine_bonus_ratio(pond_all, apply_num):
 # @param 发奖理由
 # @i 本次排名的名次
 # @return 3:发钱出现错误，系统回滚，发钱失败   1：发钱成功（用户账户更新成功，系统账户更新成功，交易记录表记录成功），奖金记录表记录成功    4：发钱成功，但是奖金记录表记录失败
-def distribute_aware_template(company_id, sys_type, sys_amount, sys_notes, i, comp_id):
-    for user_id in user_rank_list[i]:
+def distribute_aware_template(company_id, sys_type, sys_amount, sys_notes, rank, comp_id, user_rank_list):
+    for user_id in user_rank_list[rank]:
         sys_serial = str(time.time()).split('.')[0] + user_id + "16"
         money_alliocation_trade_res = money_alliocation_trade(sys_serial, company_id, user_id, sys_type, sys_amount, sys_notes)
         if money_alliocation_trade_res != 1:
             print money_alliocation_trade_res
             return 3
-        create_award_detail_competition_res = create_award_detail_competition(comp_id, user_id, i, sys_amount)
+        create_award_detail_competition_res = create_award_detail_competition(comp_id, user_id, rank, sys_amount)
         if not create_award_detail_competition_res:
             return 4
-        print "sys_serial: ", sys_serial, " company_id: ", company_id, " user_id: ", user_id, " sys_type: ", sys_type, " sys_amount: ", sys_amount, " sys_notes: ", sys_notes
-        print "comp_id: ", comp_id, " user_id: ", user_id, " rank: ", i, " user_award: ", sys_amount
+        # print "sys_serial: ", sys_serial, " company_id: ", company_id, " user_id: ", user_id, " sys_type: ", sys_type, " sys_amount: ", sys_amount, " sys_notes: ", sys_notes
+        # print "comp_id: ", comp_id, " user_id: ", user_id, " rank: ", rank, " user_award: ", sys_amount
     return 1
 
 # 奖金发放 @user_wallet  @sys_detail  @award_detail_competition @pond_detail
@@ -730,7 +730,7 @@ def distribute_aware_template(company_id, sys_type, sys_amount, sys_notes, i, co
 # @param pond_all 奖池大小
 # @param sys_notes 发钱原因
 # @param sys_note
-# @return 0: 奖金金额不对或者参赛人数不对，或者用户排名不对  2: 错误码， 发奖时，某一名（第一名、第二名等）人数<= 0   5:奖池创建失败
+# @return 0: 奖金金额不对或者参赛人数不对，或者用户排名不对  1:奖金发放完全正确，该写的表均已经写完成 2: 错误码， 发奖时，某一名（第一名、第二名等）人数<= 0   5:奖池创建失败
 def bonus_give_out_new(comp_id, user_rank_list, apply_num, pond_all, sys_notes, sys_type=6, commission_ratio = 0, company_id = "888888888$"):
     pond_send = int(pond_all - pond_all * commission_ratio)
     user_rank_list[0] = []
@@ -747,7 +747,9 @@ def bonus_give_out_new(comp_id, user_rank_list, apply_num, pond_all, sys_notes, 
         if len(user_rank_list[1]) <= 0:
             return 2
         sys_amount = math.floor(pond_send // len(user_rank_list[1]))
-        distribute_aware_template(company_id, sys_type, sys_amount, sys_notes, 1, comp_id)
+        distribute_aware_template_res = distribute_aware_template(company_id, sys_type, sys_amount, sys_notes, 1, comp_id, user_rank_list)
+        if distribute_aware_template_res != 1:
+            return distribute_aware_template_res
         real_send += int(sys_amount*len(user_rank_list[1]))
     elif 5 <= apply_num < 10:
         aware_array = determine_bonus_ratio(pond_send, apply_num)
@@ -758,7 +760,7 @@ def bonus_give_out_new(comp_id, user_rank_list, apply_num, pond_all, sys_notes, 
             start_index = end_index
             if sys_amount <= 0:
                 break
-            distribute_aware_template_res = distribute_aware_template(company_id, sys_type, sys_amount, sys_notes, i+1, comp_id)
+            distribute_aware_template_res = distribute_aware_template(company_id, sys_type, sys_amount, sys_notes, i+1, comp_id, user_rank_list)
             if distribute_aware_template_res != 1:
                 return distribute_aware_template_res
             real_send += int(sys_amount * len(user_rank_list[i+1]))
@@ -785,7 +787,7 @@ def bonus_give_out_new(comp_id, user_rank_list, apply_num, pond_all, sys_notes, 
             start_index = end_index
             if sys_amount <= 0:
                 break
-            distribute_aware_template_res = distribute_aware_template(company_id, sys_type, sys_amount, sys_notes, i+1, comp_id)
+            distribute_aware_template_res = distribute_aware_template(company_id, sys_type, sys_amount, sys_notes, i+1, comp_id, user_rank_list)
             if distribute_aware_template_res != 1:
                 return distribute_aware_template_res
             real_send += int(sys_amount * len(user_rank_list[i+1]))
@@ -799,7 +801,7 @@ def bonus_give_out_new(comp_id, user_rank_list, apply_num, pond_all, sys_notes, 
             start_index = end_index
             if sys_amount <= 0:
                 break
-            distribute_aware_template_res = distribute_aware_template(company_id, sys_type, sys_amount, sys_notes, i+1, comp_id)
+            distribute_aware_template_res = distribute_aware_template(company_id, sys_type, sys_amount, sys_notes, i+1, comp_id, user_rank_list)
             if distribute_aware_template_res != 1:
                 return distribute_aware_template_res
             real_send += int(sys_amount * len(user_rank_list[i+1]))
@@ -813,7 +815,7 @@ def bonus_give_out_new(comp_id, user_rank_list, apply_num, pond_all, sys_notes, 
             start_index = end_index
             if sys_amount <= 0:
                 break
-            distribute_aware_template_res = distribute_aware_template(company_id, sys_type, sys_amount, sys_notes, i+1, comp_id)
+            distribute_aware_template_res = distribute_aware_template(company_id, sys_type, sys_amount, sys_notes, i+1, comp_id, user_rank_list)
             if distribute_aware_template_res != 1:
                 return distribute_aware_template_res
             real_send += int(sys_amount * len(user_rank_list[i+1]))
@@ -821,15 +823,12 @@ def bonus_give_out_new(comp_id, user_rank_list, apply_num, pond_all, sys_notes, 
     create_pond_detail_res = create_pond_detail(comp_id, apply_num, pond_all, real_send, pond_balance)
     if not create_pond_detail_res:
         return 5
-    print real_send
+    # print real_send
     return 1
 
-
-
-
-    # return 1
-
-
+##############################
+###########测试用例###########
+##############################
 # comp_id = 2
 # # user_rank_list = {1:["888000100$"], 2:["888000200$"], 3:["888000300$"], 4:["888000400$"], 5:["888000500$"], 6:["888000600$"], 7:["888000700$"], 8:["888000800$"], 9:["888000900$"], 10:["888001000$"], 11: ["888001100$"]}
 # # user_rank_list = {1:["888000100$", "888000101$"], 2:["888000200$"], 3:["888000300$"], 4:["888000400$"], 5:["888000500$"], 6:["888000600$", "888000601$"], 7:["888000700$"],  8:["888000800$"], 9:["888000900$"]}
